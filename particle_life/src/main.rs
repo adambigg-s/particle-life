@@ -16,14 +16,14 @@ const DAMPENING_DISTANCE: f32 = 5.0;
 
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Debug, Copy)]
 enum ParticleType {
     White,
     Purple,
     Blue,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Debug, Copy)]
 struct Vector<Type> {
     x: Type,
     y: Type,
@@ -35,7 +35,7 @@ struct Variety {
     particle_type: ParticleType,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Debug, Copy)]
 struct Particle {
     velocity: Vector<f32>,
     position: Vector<f32>,
@@ -108,10 +108,7 @@ impl Universe {
     }
 
     fn assert_forces(&mut self) {
-        if self.particles.len() == 0 {
-            return; 
-        }
-        for i in 0..(self.particles.len() - 1) {
+        for i in 0..self.particles.len() {
             for j in (i + 1)..self.particles.len() {
     
                 let (p1, p2) = {
