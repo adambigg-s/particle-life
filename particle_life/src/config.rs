@@ -7,10 +7,11 @@ use macroquad::prelude::*;
 
 pub const WIDTH: f32 = 1700 as f32;
 pub const HEIGHT: f32 = 1200 as f32;
-pub const TICK: f32 = 0.2;
-pub const DISTANCE_MAX: f32 = 64.0;
-pub const DISTANCE_MIN: f32 = 9.0;
-pub const FRICTION: f32 = 0.99;
+pub const TICK: f32 = 0.15;
+pub const DISTANCE_MAX: f32 = 400.0;
+pub const DISTANCE_MIN: f32 = 35.0;
+pub const FRICTION: f32 = 0.95;
+pub const STANDARD_REPULSION: f32 = 350.0;
 
 
 

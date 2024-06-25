@@ -24,8 +24,16 @@ async fn main() {
     let mut universe: Universe = Universe::new();
     let mut state: State = State::Simulation;
 
+    universe.assert_attraction(0, 0, 90.0);
+    universe.assert_attraction(0, 1, 80.0);
+    universe.assert_attraction(1, 0, 50.0);
+    universe.assert_attraction(1, 1, 90.0);
+
+    universe.random_attraction(1000.0);
+    universe.spawn_random(1200);
+
     loop {
-        clear_background(DARKGRAY);
+        clear_background(Color::from_hex(0xd3ab9e));
 
         for &particle in &universe.particles {
             draw_circle(particle.position.x, particle.position.y, 3.5, particle.get_color());
@@ -63,9 +71,13 @@ async fn main() {
 
         if is_key_pressed(KeyCode::R) {
             universe.clear_universe();
+            universe.spawn_random(1200);
+        }
+        if is_key_pressed(KeyCode::H) {
+            universe.random_attraction(1200.0);
         }
 
-        thread::sleep(Duration::from_millis(5));
+        thread::sleep(Duration::from_millis(0));
         next_frame().await;
     }
 }

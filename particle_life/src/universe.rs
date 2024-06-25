@@ -1,21 +1,72 @@
 
 
 
+use macroquad::rand;
+
+
+
 use crate::vector::Vector;
 use crate::particle::{Particle, ParticleType};
-use crate::config::{DISTANCE_MAX, DISTANCE_MIN, WIDTH, HEIGHT, FRICTION};
+use crate::config::{DISTANCE_MAX, FRICTION, HEIGHT, WIDTH};
 
 
 
 pub struct Universe {
-    pub particles: Vec<Particle>, 
+    pub particles: Vec<Particle>,
+    pub attraction: Vec<Vec<f32>>,
 }
 
 impl Universe {
     pub fn new() -> Self {
         Universe {
             particles: Vec::new(),
+            attraction: vec![vec![0.0; 5]; 5],
         }
+    }
+
+    pub fn assert_attraction(&mut self, row: usize, col: usize, value: f32) {
+        self.attraction[row][col] = value;
+    }
+
+    pub fn random_attraction(&mut self, max_attraction: f32) {
+        let rows: usize = self.attraction.len();
+        let cols: usize = self.attraction.first().unwrap().len();
+
+        for i in 0..rows {
+            for j in 0..cols {
+                self.attraction[i][j] = rand::gen_range(-max_attraction, max_attraction);
+            }
+        }
+    }
+
+    pub fn spawn_random(&mut self, num: usize) {
+        for _ in 0..num {
+            let particle_type = match rand::gen_range(0, 5) {
+                0 => ParticleType::White,
+                1 => ParticleType::Red,
+                2 => ParticleType::Purple,
+                3 => ParticleType::Blue, 
+                4 => ParticleType::Green,
+                _ => ParticleType::White,
+            };
+            let x: f32 = rand::gen_range(0.0, WIDTH);
+            let y: f32 = rand::gen_range(0.0, HEIGHT);
+
+            let new_particle: Particle = Particle { 
+                velocity: Vector { x: 0.0, y: 0.0 }, 
+                position: Vector { x: x, y: y }, 
+                variety: particle_type 
+            };
+    
+            self.particles.push(new_particle);
+        }
+    }
+
+    pub fn get_attraction(&self, p1: ParticleType, p2: ParticleType) -> f32 {
+        let row: usize = p1.get_index();
+        let col: usize = p2. get_index();
+
+        return self.attraction[row][col];
     }
 
     pub fn clear_universe(&mut self) {
@@ -43,6 +94,7 @@ impl Universe {
             let mut total_force: Vector<f32> = Vector { x: 0.0, y: 0.0 };
 
             for j in 0..self.particles.len() {
+
                 if i == j {
                     continue;
                 }
@@ -56,12 +108,12 @@ impl Universe {
                 let distance_squared: f32 = dx * dx + dy * dy;
                 let distance: f32 = distance_squared.sqrt();
 
-                if distance > DISTANCE_MAX {
+                if distance > DISTANCE_MAX || distance < 0.05 {
                     continue;
                 }
 
-                let modifier: f32 = ParticleType::get_attraction(p1.variety, p2.variety);
-                let force: f32 = Particle::get_force(distance, modifier);
+                let attraction: f32 = self.get_attraction(p1.variety, p2.variety);
+                let force: f32 = Particle::get_force(distance, attraction);
 
                 total_force.x += force * dx / distance;
                 total_force.y += force * dy / distance;
