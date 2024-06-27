@@ -30,8 +30,8 @@ async fn main() {
     universe.assert_attraction(1, 1, 90.0);
 
     universe.random_attraction(1000.0);
-    universe.spawn_random(1200);
-
+    universe.spawn_random(2000);
+    
     loop {
         clear_background(Color::from_hex(0xd3ab9e));
 
@@ -77,7 +77,7 @@ async fn main() {
             universe.random_attraction(1200.0);
         }
 
-        thread::sleep(Duration::from_millis(0));
+        thread::sleep(Duration::from_millis(1));
         next_frame().await;
     }
 }
