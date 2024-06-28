@@ -24,19 +24,27 @@ async fn main() {
     let mut universe: Universe = Universe::new();
     let mut state: State = State::Simulation;
 
-    universe.assert_attraction(0, 0, 90.0);
-    universe.assert_attraction(0, 1, 80.0);
-    universe.assert_attraction(1, 0, 50.0);
-    universe.assert_attraction(1, 1, 90.0);
+    universe.assert_attraction(0, 0, 1500.0);
+    universe.random_attraction(1500.0);
 
-    universe.random_attraction(1000.0);
-    universe.spawn_random(2000);
+    for i in 0..universe.attraction.len() {
+        for j in 0..universe.attraction.first().unwrap().len() {
+            if i == j {
+                universe.assert_attraction_modifier(i, j, 750.0);
+            }
+            if j == i + 1 {
+                universe.assert_attraction_modifier(i, j, 500.0);
+            }
+        }
+    }
+
+    universe.spawn_random(5_000, 12);
     
     loop {
-        clear_background(Color::from_hex(0xd3ab9e));
+        clear_background(Color::from_hex(0x141414));
 
         for &particle in &universe.particles {
-            draw_circle(particle.position.x, particle.position.y, 3.5, particle.get_color());
+            draw_circle(particle.position.x, particle.position.y, 1.5, particle.get_color());
         }
 
         if state == State::Simulation {
@@ -71,13 +79,13 @@ async fn main() {
 
         if is_key_pressed(KeyCode::R) {
             universe.clear_universe();
-            universe.spawn_random(1200);
+            universe.spawn_random(1200, 7);
         }
         if is_key_pressed(KeyCode::H) {
-            universe.random_attraction(1200.0);
+            universe.random_attraction(1000.0);
         }
 
-        thread::sleep(Duration::from_millis(1));
+        thread::sleep(Duration::from_millis(0));
         next_frame().await;
     }
 }

@@ -17,6 +17,13 @@ pub enum ParticleType {
     Red,
     Blue,
     Green,
+    Extra1,
+    Extra2,
+    Extra3,
+    Extra4,
+    Extra5,
+    Extra6,
+    Extra7,
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -27,6 +34,10 @@ pub struct Particle {
 }
 
 impl ParticleType {
+    pub fn get_types() -> usize {
+        return 12;
+    }
+
     pub fn get_index(&self) -> usize {
         match self {
             ParticleType::White => 0,
@@ -34,27 +45,41 @@ impl ParticleType {
             ParticleType::Red => 2,
             ParticleType::Blue => 3,
             ParticleType::Green => 4,
+            ParticleType::Extra1 => 5,
+            ParticleType::Extra2 => 6,
+            ParticleType::Extra3 => 7,
+            ParticleType::Extra4 => 8,
+            ParticleType::Extra5 => 9,
+            ParticleType::Extra6 => 10,
+            ParticleType::Extra7 => 11,
         }
     }
 }
 
 impl Particle {
+    pub fn get_color(&self) -> Color {
+        match self.variety {
+            ParticleType::White => Color::from_hex(0xf8a5b3),
+            ParticleType::Purple => Color::from_hex(0xffd391),
+            ParticleType::Red => Color::from_hex(0xffe599),
+            ParticleType::Blue => Color::from_hex(0xb4e197),
+            ParticleType::Green => Color::from_hex(0xa1d6e2),
+            ParticleType::Extra1 => Color::from_hex(0xbfa8d9),
+            ParticleType::Extra2 => Color::from_hex(0xf4a1a6),
+            ParticleType::Extra3 => Color::from_hex(0xca91d4),
+            ParticleType::Extra4 => Color::from_hex(0xffb3b3),
+            ParticleType::Extra5 => Color::from_hex(0xffd1e8),
+            ParticleType::Extra6 => Color::from_hex(0xc5c5ff),
+            ParticleType::Extra7 => Color::from_hex(0xa5f3e1), 
+        }
+    }
+    
     pub fn get_force(distance: f32, attraction: f32) -> f32 {
         if distance < DISTANCE_MIN {
             return -STANDARD_REPULSION / (distance * distance + BUFFER_DISTANCE);
         }
         else {
             return attraction / (distance * distance);
-        }
-    }
-
-    pub fn get_color(&self) -> Color {
-        match self.variety {
-            ParticleType::White => Color::from_hex(0xd1cfe2),
-            ParticleType::Purple => Color::from_hex(0x9cadce),
-            ParticleType::Red => Color::from_hex(0x7ec4cf),
-            ParticleType::Blue => Color::from_hex(0x52b2cf),
-            ParticleType::Green => Color::from_hex(0xf2dfd7), 
         }
     }
 }
