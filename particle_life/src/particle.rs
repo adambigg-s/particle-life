@@ -6,7 +6,6 @@ use macroquad::prelude::*;
 
 
 use crate::vector::Vector;
-use crate::config::{DISTANCE_MIN, STANDARD_REPULSION, BUFFER_DISTANCE};
 
 
 
@@ -54,6 +53,24 @@ impl ParticleType {
             ParticleType::Extra7 => 11,
         }
     }
+
+    pub fn get_particle_from_index(idx: i32) -> Self {
+        match idx {
+            0 => ParticleType::White,
+            1 => ParticleType::Purple,
+            2 => ParticleType::Red,
+            3 => ParticleType::Blue,
+            4 => ParticleType::Green,
+            5 => ParticleType::Extra1,
+            6 => ParticleType::Extra2,
+            7 => ParticleType::Extra3,
+            8 => ParticleType::Extra4,
+            9 => ParticleType::Extra5,
+            10 => ParticleType::Extra6,
+            11 => ParticleType::Extra7,
+            _ => ParticleType::White,
+        }
+    }
 }
 
 impl Particle {
@@ -71,15 +88,6 @@ impl Particle {
             ParticleType::Extra5 => Color::from_hex(0xffd1e8),
             ParticleType::Extra6 => Color::from_hex(0xc5c5ff),
             ParticleType::Extra7 => Color::from_hex(0xa5f3e1), 
-        }
-    }
-    
-    pub fn get_force(distance: f32, attraction: f32) -> f32 {
-        if distance < DISTANCE_MIN {
-            return -STANDARD_REPULSION / (distance * distance + BUFFER_DISTANCE);
-        }
-        else {
-            return attraction / (distance * distance);
         }
     }
 }

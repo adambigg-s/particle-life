@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use crate::vector::Vector;
 use crate::particle::{Particle, ParticleType};
-use crate::config::{CELL_SIZE, DISTANCE_MAX, FRICTION, HEIGHT, WIDTH};
+use crate::config::{Configuration, HEIGHT, WIDTH};
 
 
 
@@ -35,19 +35,13 @@ impl Universe {
         self.attraction[row][col] += modifier;
     }
 
-    fn update_grid(&mut self) {
-        self.grid.clear();
-        for (idx, particle) in self.particles.iter().enumerate() {
-            let cell_x: isize = (particle.position.x / CELL_SIZE) as isize;
-            let cell_y: isize = (particle.position.y / CELL_SIZE) as isize;
-
-            self.grid.entry((cell_x, cell_y)).or_insert(Vec::new()).push(idx);
-        }
-    }
-
-    pub fn random_attraction(&mut self, max_attraction: f32) {
+    pub fn random_attraction(&mut self, max_attraction: f32, rand_iters: usize) {
         let rows: usize = self.attraction.len();
         let cols: usize = self.attraction.first().unwrap().len();
+
+        for _ in 0..rand_iters {
+            let _x: i32 = rand::gen_range(0, 40);
+        }
 
         for i in 0..rows {
             for j in 0..cols {
@@ -55,24 +49,12 @@ impl Universe {
             }
         }
     }
-
+    
     pub fn spawn_random(&mut self, num: usize, types: i32) {
         for _ in 0..num {
-            let particle_type = match rand::gen_range(0, types) {
-                0 => ParticleType::White,
-                1 => ParticleType::Red,
-                2 => ParticleType::Purple,
-                3 => ParticleType::Blue, 
-                4 => ParticleType::Green,
-                5 => ParticleType::Extra1,
-                6 => ParticleType::Extra2,
-                7 => ParticleType::Extra3,
-                8 => ParticleType::Extra4,
-                9 => ParticleType::Extra5,
-                10 => ParticleType::Extra6,
-                11 => ParticleType::Extra7,
-                _ => ParticleType::White,
-            };
+            let particle_type: ParticleType = ParticleType::get_particle_from_index(
+                rand::gen_range(0, types.min(ParticleType::get_types() as i32 - 1))
+            );
             let x: f32 = rand::gen_range(0.0, WIDTH);
             let y: f32 = rand::gen_range(0.0, HEIGHT);
 
@@ -84,13 +66,6 @@ impl Universe {
     
             self.particles.push(new_particle);
         }
-    }
-
-    fn get_attraction(&self, p1: ParticleType, p2: ParticleType) -> f32 {
-        let row: usize = p1.get_index();
-        let col: usize = p2. get_index();
-
-        return self.attraction[row][col];
     }
 
     pub fn clear_universe(&mut self) {
@@ -107,45 +82,57 @@ impl Universe {
         self.particles.push(new_particle);
     }
 
-    pub fn update_universe(&mut self, tick: f32) {
-        self.assert_forces(tick);
-        self.assert_movement(tick);
-        self.update_grid();
+    pub fn update_universe(&mut self, config: &Configuration) {
+        self.assert_forces(config);
+        self.assert_movement(config);
+        self.update_grid(config);
     }
 
-    fn assert_forces(&mut self, delta_t: f32) {
+    fn assert_forces(&mut self, config: &Configuration) {
         let mut forces: Vec<Vector<f32>> = vec![Vector { x: 0.0, y: 0.0 }; self.particles.len()];
 
         for (i, particle) in self.particles.iter().enumerate() {
-            let cell_x: isize = (particle.position.x / CELL_SIZE) as isize;
-            let cell_y: isize = (particle.position.y / CELL_SIZE) as isize;
+            let cell_x: isize = (particle.position.x / config.cell_size) as isize;
+            let cell_y: isize = (particle.position.y / config.cell_size) as isize;
 
             for dx in -1..=1 {
                 for dy in -1..=1 {
-                    if let Some(cell_particles) = self.grid.get(&(cell_x + dx, cell_y + dy)) {
-                        for &j in cell_particles {
+
+                    let neighbor_cell_x: isize = (cell_x + dx).rem_euclid((WIDTH / config.cell_size) as isize);
+                    let neighbor_cell_y: isize = (cell_y + dy).rem_euclid((HEIGHT / config.cell_size) as isize);
+
+                    if let Some(neighbors) = self.grid.get(&(neighbor_cell_x, neighbor_cell_y)) {
+                        for &j in neighbors {
 
                             if i == j {
                                 continue;
                             }
+                            
+                            let neighbor = &self.particles[j];
+                            let mut dx = neighbor.position.x - particle.position.x;
+                            let mut dy = neighbor.position.y - particle.position.y;
 
-                            let p1: &Particle = &self.particles[i];
-                            let p2: &Particle = &self.particles[j];
-                            let dx: f32 = p2.position.x - p1.position.x;
-                            let dy: f32 = p2.position.y - p1.position.y;
-
-                            let distance_squared: f32 = dx * dx + dy * dy;
-                            let distance: f32 = distance_squared.sqrt();
-
-                            if distance > DISTANCE_MAX || distance < 0.1 {
-                                continue;
+                            if dx > WIDTH / 2.0 {
+                                dx -= WIDTH;
+                            } 
+                            else if dx < -WIDTH / 2.0 {
+                                dx += WIDTH;
                             }
 
-                            let attraction: f32 = self.get_attraction(p1.variety, p2.variety);
-                            let force: f32 = Particle::get_force(distance, attraction);
+                            if dy > HEIGHT / 2.0 {
+                                dy -= HEIGHT;
+                            } 
+                            else if dy < -HEIGHT / 2.0 {
+                                dy += HEIGHT;
+                            }
 
-                            forces[i].x += force * dx / distance;
-                            forces[i].y += force * dy / distance;
+                            let distance = (dx * dx + dy * dy).sqrt();
+                            if distance < config.distance_max {
+                                let attraction: f32 = self.get_attraction(particle.variety, neighbor.variety);
+                                let force: f32 = Universe::get_force(distance, attraction, config);
+                                forces[i].x += force * dx / distance;
+                                forces[i].y += force * dy / distance;
+                            }
                         }
                     }
                 }
@@ -153,28 +140,56 @@ impl Universe {
         }
 
         for (i, force) in forces.iter().enumerate() {
-            self.particles[i].velocity += *force * delta_t;
+            self.particles[i].velocity += *force * config.tick;
         }
     }
     
-    fn assert_movement(&mut self, delta_t: f32) {
+    fn assert_movement(&mut self, config: &Configuration) {
         for particle in &mut self.particles {
-            particle.position += particle.velocity * delta_t;
+            particle.position += particle.velocity * config.tick;
 
             if particle.position.x < 0.0 {
-                particle.position.x = WIDTH;
-            } else if particle.position.x > WIDTH {
-                particle.position.x = 0.0;
+                particle.position.x += WIDTH;
+            } 
+            else if particle.position.x > WIDTH {
+                particle.position.x -= WIDTH;
             }
 
             if particle.position.y < 0.0 {
-                particle.position.y = HEIGHT;
-            } else if particle.position.y > HEIGHT {
-                particle.position.y = 0.0;
+                particle.position.y += HEIGHT;
+            } 
+            else if particle.position.y > HEIGHT {
+                particle.position.y -= HEIGHT;
             }
 
-            particle.velocity.x *= FRICTION;
-            particle.velocity.y *= FRICTION;
+            particle.velocity.x *= config.friction;
+            particle.velocity.y *= config.friction;
+        }
+    }
+
+    fn update_grid(&mut self, config: &Configuration) {
+        self.grid.clear();
+        for (idx, particle) in self.particles.iter().enumerate() {
+            let cell_x: isize = (particle.position.x / config.cell_size) as isize;
+            let cell_y: isize = (particle.position.y / config.cell_size) as isize;
+
+            self.grid.entry((cell_x, cell_y)).or_insert(Vec::new()).push(idx);
+        }
+    }
+
+    fn get_attraction(&self, p1: ParticleType, p2: ParticleType) -> f32 {
+        let row: usize = p1.get_index();
+        let col: usize = p2. get_index();
+
+        return self.attraction[row][col];
+    }
+
+    fn get_force(distance: f32, attraction: f32, config: &Configuration) -> f32 {
+        if distance < config.distance_min {
+            return -config.standard_repulsion / (distance * distance + config.buffer_distance);
+        }
+        else {
+            return attraction / (distance * distance);
         }
     }
 }
