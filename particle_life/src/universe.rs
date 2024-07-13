@@ -122,7 +122,7 @@ impl Universe {
         self.assert_movement(config);
         self.update_grid(config);
     }
-    
+
     pub fn draw_attraction_matrix(&self) {
         let num_particles = ParticleType::get_types();
         let cell_size: f32 = 75.0;

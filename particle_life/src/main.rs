@@ -42,7 +42,6 @@ async fn main() {
         if state == State::Simulation {
             universe.update_universe(&config);
         }
-
         if is_key_pressed(KeyCode::P) {
             if state == State::Pause {
                 state = State::Simulation;
@@ -59,7 +58,6 @@ async fn main() {
         if is_key_pressed(KeyCode::Key1) {
             curr_type = (curr_type + 1) % ((ParticleType::get_types() as i32)-1);
         }
-
         if is_key_pressed(KeyCode::O) {
             universe.clear_universe();
         }
