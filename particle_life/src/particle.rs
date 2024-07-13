@@ -71,6 +71,17 @@ impl ParticleType {
             _ => ParticleType::White,
         }
     }
+
+    pub fn get_color_from_index(idx: usize) -> Color {
+        let particle_type: ParticleType = Self::get_particle_from_index(idx as i32);
+        let test_particle: Particle = Particle { 
+            velocity: Vector { x: 0.0, y: 0.0 }, 
+            position: Vector { x: 0.0, y: 0.0 }, 
+            variety: particle_type 
+        };
+
+        return test_particle.get_color();
+    }
 }
 
 impl Particle {

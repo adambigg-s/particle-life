@@ -24,33 +24,13 @@ async fn main() {
     let mut universe: Universe = Universe::new();
     let mut state: State = State::Simulation;
     let mut config: Configuration = Configuration::new();
-    let mut curr_type: usize = 0;
-    let particle_types: Vec<ParticleType> = 
-        vec![
-            ParticleType::White, ParticleType::Purple, ParticleType::Blue, 
-            ParticleType::Red, ParticleType::Green, ParticleType::Extra1,
-            ParticleType::Extra2, ParticleType::Extra3, ParticleType::Extra4,
-            ParticleType::Extra5, ParticleType::Extra6, ParticleType::Extra7
-        ];
+    let mut curr_type: i32 = 0;
+    let mut show_matrix: bool = false;
 
     universe.assert_attraction(0, 0, 1500.0);
-    universe.random_attraction(1000.0, 230);
-
-    for i in 0..universe.attraction.len() {
-        for j in 0..universe.attraction.first().unwrap().len() {
-            if i == j {
-                universe.assert_attraction_modifier(i, j, 875.0);
-            }
-            if j == i + 1 {
-                universe.assert_attraction_modifier(i, j, 500.0);
-            }
-            if j == i - 1 {
-                universe.assert_attraction_modifier(i, j, -250.0);
-            }
-        }
-    }
-
-    universe.spawn_random(7500, 11);
+    universe.random_attraction(1750.0);
+    universe.assert_common_attraction(500.0, -250.0, 250.0);
+    universe.spawn_random(6000, 11);
     
     loop {
         clear_background(Color::from_hex(0x141414));
@@ -74,30 +54,21 @@ async fn main() {
 
         if is_mouse_button_down(MouseButton::Left) {
             let (mouse_x, mouse_y) = mouse_position();
-            universe.add_particle(mouse_x, mouse_y, particle_types[curr_type]);
+            universe.add_particle(mouse_x, mouse_y, ParticleType::get_particle_from_index(curr_type));
         }
         if is_key_pressed(KeyCode::Key1) {
-            curr_type = (curr_type + 1) % particle_types.len();
+            curr_type = (curr_type + 1) % ((ParticleType::get_types() as i32)-1);
         }
 
         if is_key_pressed(KeyCode::O) {
             universe.clear_universe();
         }
         if is_key_pressed(KeyCode::L) {
-            universe.random_attraction(1750.0, 12);
-            for i in 0..universe.attraction.len() {
-                for j in 0..universe.attraction.first().unwrap().len() {
-                    if i == j {
-                        universe.assert_attraction_modifier(i, j, 875.0);
-                    }
-                    if j == i + 1 {
-                        universe.assert_attraction_modifier(i, j, 500.0);
-                    }
-                    if j == i - 1 {
-                        universe.assert_attraction_modifier(i, j, -250.0);
-                    }
-                }
-            }
+            universe.random_attraction(1750.0);
+            universe.assert_common_attraction(875.0, -250.0, 500.0);
+        }
+        if is_key_pressed(KeyCode::M) {
+            show_matrix = !show_matrix;
         }
 
         if is_key_pressed(KeyCode::A) {
@@ -145,10 +116,11 @@ async fn main() {
         draw_text(&format!("D_MIN: {}", config.distance_min), 10.0, text_start + text_buffer * 2.0, 22.5, Color::from_hex(0xbfa8d9));
         draw_text(&format!("FRIC: {:.2}", config.friction), 10.0, text_start + text_buffer * 3.0, 22.5, Color::from_hex(0xa5f3e1));
         draw_text(&format!("STD_RPL: {}", config.standard_repulsion), 10.0, text_start + text_buffer * 4.0, 22.5, Color::from_hex(0xffd1e8));
-        draw_text(&format!("Type: {:?}", particle_types[curr_type]), 10.0, text_start + text_buffer * 5.0, 22.5, Color::from_hex(0xca91d4));
+        draw_text(&format!("Type: {:?}", ParticleType::get_particle_from_index(curr_type)), 10.0, text_start + text_buffer * 5.0, 22.5, Color::from_hex(0xca91d4));
         draw_text(&format!("Tick: {:.2}", config.tick), 10.0, text_start + text_buffer * 6.0, 22.5, Color::from_hex(0xa1d6e2));
         draw_text(&format!("Rad: {:.2}", config.draw_size), 10.0, text_start + text_buffer * 7.0, 22.5, Color::from_hex(0xb4e197));
         draw_text(&format!("C_CT: {}", config.cell_size), 10.0, text_start + text_buffer * 8.0, 22.5, Color::from_hex(0xf4a1a6));
+        if show_matrix { universe.draw_attraction_matrix(); }
 
         thread::sleep(Duration::from_millis(0));
         next_frame().await;

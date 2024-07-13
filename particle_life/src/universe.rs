@@ -1,7 +1,10 @@
 
 
 
+use macroquad::color::{Color, BLACK, GREEN, RED};
 use macroquad::rand;
+use macroquad::shapes::draw_rectangle;
+use macroquad::text::draw_text;
 use std::collections::HashMap;
 
 
@@ -35,19 +38,51 @@ impl Universe {
         self.attraction[row][col] += modifier;
     }
 
-    pub fn random_attraction(&mut self, max_attraction: f32, rand_iters: usize) {
+    pub fn random_attraction(&mut self, max_attraction: f32) {
         let rows: usize = self.attraction.len();
         let cols: usize = self.attraction.first().unwrap().len();
-
-        for _ in 0..rand_iters {
-            let _x: i32 = rand::gen_range(0, 40);
-        }
 
         for i in 0..rows {
             for j in 0..cols {
                 self.attraction[i][j] = rand::gen_range(-max_attraction, max_attraction);
             }
         }
+    }
+
+    pub fn assert_attraction_self(&mut self, self_attraction: f32) {
+        for i in 0..self.attraction.len() {
+            for j in 0..self.attraction.first().unwrap().len() {
+                if i == j {
+                    self.assert_attraction_modifier(i, j, self_attraction);
+                }
+            }
+        }
+    }
+
+    pub fn assert_attraction_self_prev_neighbor(&mut self, prev_neighbor_attraction: f32) {
+        for i in 0..self.attraction.len() {
+            for j in 0..self.attraction.first().unwrap().len() {
+                if j == i - 1 {
+                    self.assert_attraction_modifier(i, j, prev_neighbor_attraction);
+                }
+            }
+        }
+    }
+
+    pub fn assert_attraction_self_next_neighbor(&mut self, self_neighbor_attraction: f32) {
+        for i in 0..self.attraction.len() {
+            for j in 0..self.attraction.first().unwrap().len() {
+                if j == i + 1 {
+                    self.assert_attraction_modifier(i, j, self_neighbor_attraction);
+                }
+            }
+        }
+    }
+
+    pub fn assert_common_attraction(&mut self, self_attraction: f32, prev_attraction: f32, next_attraction: f32) {
+        self.assert_attraction_self(self_attraction);
+        self.assert_attraction_self_prev_neighbor(prev_attraction);
+        self.assert_attraction_self_next_neighbor(next_attraction);
     }
     
     pub fn spawn_random(&mut self, num: usize, types: i32) {
@@ -86,6 +121,41 @@ impl Universe {
         self.assert_forces(config);
         self.assert_movement(config);
         self.update_grid(config);
+    }
+    
+    pub fn draw_attraction_matrix(&self) {
+        let num_particles = ParticleType::get_types();
+        let cell_size: f32 = 75.0;
+        let draw_size: f32 = cell_size - 5.0;
+        let start_x: f32 = 500.0;
+        let start_y: f32 = 150.0;
+
+        for i in 0..num_particles {
+            for j in 0..num_particles {
+
+                let value: f32 = self.attraction[i][j];
+                let color: Color = if value > 0.0 { GREEN } else { RED };
+
+                let x: f32 = start_x + i as f32 * cell_size;
+                let y: f32 = start_y + j as f32 * cell_size;
+
+                draw_rectangle(x, y, draw_size, draw_size, color);
+                draw_text(&format!("{:.0}", value), x + 15.0, y + 30.0, 15.0, BLACK);
+            }
+        }
+
+        for i in 0..num_particles {
+            let x: f32 = start_x + i as f32 * cell_size;
+            let y: f32 = start_y - cell_size;
+
+            draw_rectangle(x, y, draw_size, draw_size, ParticleType::get_color_from_index(i));
+        }
+        for j in 0..num_particles {
+            let x: f32 = start_x - cell_size;
+            let y: f32 = start_y + j as f32 * cell_size;
+
+            draw_rectangle(x, y, draw_size, draw_size, ParticleType::get_color_from_index(j));
+        }
     }
 
     fn assert_forces(&mut self, config: &Configuration) {
@@ -150,15 +220,13 @@ impl Universe {
 
             if particle.position.x < 0.0 {
                 particle.position.x += WIDTH;
-            } 
-            else if particle.position.x > WIDTH {
+            } else if particle.position.x > WIDTH {
                 particle.position.x -= WIDTH;
             }
 
             if particle.position.y < 0.0 {
                 particle.position.y += HEIGHT;
-            } 
-            else if particle.position.y > HEIGHT {
+            } else if particle.position.y > HEIGHT {
                 particle.position.y -= HEIGHT;
             }
 
