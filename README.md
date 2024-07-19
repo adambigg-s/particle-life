@@ -1,2 +1,2 @@
-# particle-life-
+# particle-life
 making little moving particles 
